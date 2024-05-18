@@ -1,14 +1,14 @@
 "use client";
 
+import { MenuIcon, MountainIcon } from "lucide-react";
 import Link from "next/link";
+import { Button } from "./ui/button";
 import {
+  NavigationMenu,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenu,
 } from "./ui/navigation-menu";
-import { Button } from "./ui/button";
-import { SheetTrigger, SheetContent, Sheet } from "./ui/sheet";
-import { MenuIcon, MountainIcon } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 export default function Navigation() {
   return (
