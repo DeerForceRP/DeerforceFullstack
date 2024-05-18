@@ -1,7 +1,7 @@
 import AboutUs from "@/components/aboutus";
 import Header from "@/components/header";
 import Navigation from "@/components/navigation";
-import ServerStatus from "@/components/ServerStatus";
+import ServerStatus from "@/components/serverstatus";
 import Image from "next/image";
 
 export default function Home() {

@@ -4,33 +4,83 @@ import ServerStatusService from "@/services/ServerStatusService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+
+interface WeatherData {
+  data: {
+    weather: { main: string }[];
+  };
+}
+
+interface TimeData {
+  data: {
+    time: string;
+  };
+}
+
+interface ServerData {
+  status: number;
+  data: {
+    clients: number;
+    sv_maxclients: number;
+  };
+}
+
+interface StatusData {
+  weather: WeatherData | null;
+  time: TimeData | null;
+  server: ServerData | null;
+}
 
 interface Props {
   game: string;
   server: string;
 }
 
+const translateWeather = (englishWeather: string): string => {
+  switch (englishWeather.toLowerCase()) {
+    case "clear":
+      return "klart";
+    case "clouds":
+      return "skyet";
+    case "rain":
+      return "regn";
+    case "thunderstrom":
+      return "tordenvejr";
+    case "snow":
+      return "sne";
+    default:
+      return englishWeather;
+  }
+};
+
 export default function Status({ game, server }: Props) {
   const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<StatusData | null>(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
       setIsLoading(true);
       try {
-        const [weatherResponse, timeResponse, serverResponse] = await Promise.all([
-          ServerStatusService.getWeather(),
-          ServerStatusService.getTime(),
-          ServerStatusService.getServerStatus(game, server).catch((error) => {
-            console.log('Failed to fetch server satus:', error);
-            return null;
-          }),
-        ]);
+        const [weatherResponse, timeResponse, serverResponse] =
+          await Promise.all([
+            ServerStatusService.getWeather(),
+            ServerStatusService.getTime(),
+            ServerStatusService.getServerStatus(game, server).catch(
+              (error: Error) => {
+                console.log("Failed to fetch server status:", error);
+                return null;
+              },
+            ),
+          ]);
 
-        const weatherData = weatherResponse.ok ? await weatherResponse.json() : null;
-        const timeData = timeResponse.ok ? await timeResponse.json() : null;
-        const serverData = serverResponse ? await serverResponse.json() : null;
+        if (!weatherResponse.ok || !timeResponse.ok || !serverResponse) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const weatherData: WeatherData | null = await weatherResponse.json();
+        const timeData: TimeData | null = await timeResponse.json();
+        const serverData: ServerData | null = await serverResponse.json();
 
         setStatus({
           weather: weatherData,
@@ -38,7 +88,7 @@ export default function Status({ game, server }: Props) {
           server: serverData,
         });
       } catch (error) {
-        console.error("An error occured while fetching data:", error);
+        console.error("An error occurred while fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -46,56 +96,54 @@ export default function Status({ game, server }: Props) {
     fetchStatus();
   }, [game, server]);
 
+  useEffect(() => {
+    console.log(status);
+  }, [status]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (status !== null) {
+  if (status && status.server && status.server.data) {
+    const { clients, sv_maxclients } = status.server.data;
+
     return (
       <Card className="max-w-screen">
         <CardHeader>
-          <CardTitle>FiveM - {server}</CardTitle>
+          <CardTitle>
+            FiveM - {server.charAt(0).toUpperCase() + server.slice(1)}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {status.server === null ? (
-            <>
-            <p>
-              <span className="font-bold">Status: </span>
-              <span className="text-red-600">
-                <span className="animate-ping rounded-full opacity-75">&bull;</span>
-                Offline
+          <p className="font-normal text-gray-700 dark:text-gray-400">
+            <span className="font-bold">Spillere online: </span>
+            {clients}/{sv_maxclients}
+          </p>
+          <p className="font-normal text-gray-700 dark:text-gray-400">
+            <span className="font-bold">Status: </span>
+            <span className="text-lime-600">
+              <span className="animate-ping rounded-full opacity-75">
+                &bull;
               </span>
-            </p>
-            </>
-          ) : (
-            <>
-            <p className="font-normal text-gray-700 dark:text-gray-400">
-              <span className="font-bold">Spillere online: </span>
-              {status.server.data.clients}/{status.server.data.sv_maxclients}
-            </p>
-            <p className="font-normal text-gray-700 dark:text-gray-400">
-              <span className="font-bold">Status: </span>
-              <span className="text-lime-600">
-                <span className="animate-ping rounded-full opacity-75">&bull;</span>
-                Online
-              </span>
-            </p>
-            <p className="font-normal text-gray-700 dark:text-gray-400">
-              <span className="font-bold">Vejr: </span>
-              {status.weather.data.weather[0].main}
-            </p>
-            <p className="font-normal text-gray-700 dark:text-gray-400">
-              <span className="font-bold">Klokkeslæt: </span>
-              {status.time.data.time}
-            </p>
-            <p className="font-gray-700 font-normal dark:text-gray-400">
-              <span className="font-bold">Connect: </span>
-              <Button asChild color="success">
-                <Link href="fivem://connect/cfx.re/join/wz7zdy">Tilslut</Link>
-              </Button>
-            </p>
-            </>
-          )}
+              Online
+            </span>
+          </p>
+          <p className="font-normal capitalize text-gray-700 dark:text-gray-400">
+            <span className="font-bold">Vejr: </span>
+            {status.weather
+              ? translateWeather(status.weather.data.weather[0].main)
+              : "Ukendt"}
+          </p>
+          <p className="font-normal text-gray-700 dark:text-gray-400">
+            <span className="font-bold">Klokkeslæt: </span>
+            {status.time?.data.time || "Ukendt"}
+          </p>
+          <p className="font-gray-700 font-normal dark:text-gray-400">
+            <span className="font-bold">Connect: </span>
+            <Button asChild color="success">
+              <Link href="fivem://connect/cfx.re/join/wz7zdy">Tilslut</Link>
+            </Button>
+          </p>
         </CardContent>
       </Card>
     );
@@ -104,9 +152,7 @@ export default function Status({ game, server }: Props) {
   return (
     <Card className="max-w-screen">
       <CardHeader>
-        <CardTitle>
-          FiveM - {server}
-        </CardTitle>
+        <CardTitle>FiveM - {server}</CardTitle>
       </CardHeader>
       <CardContent>
         <p>
@@ -118,117 +164,5 @@ export default function Status({ game, server }: Props) {
         </p>
       </CardContent>
     </Card>
-  )
-
-  /* return (
-    <>
-      {status ? (
-        <div>
-          {status.server === null ? (
-            <Card className="max-w-screen">
-              <h4 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                FiveM
-              </h4>
-              <p className="font-normal text-gray-700 dark:text-gray-400">
-                <span className="font-bold">Status: </span>
-                <span className="text-red-600">
-                  <span className="animate-ping rounded-full opacity-75">
-                    &bull;
-                  </span>
-                  Offline
-                </span>
-              </p>
-            </Card>
-          ) : (
-            <Card className="max-w-screen">
-              {server === "main" && (
-                <h4 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                  FiveM - Main
-                </h4>
-              )}
-              {server === "dev" && (
-                <h4 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                  FiveM - Dev
-                </h4>
-              )}
-              {server === "event" && (
-                <h4 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                  FiveM - Event
-                </h4>
-              )}
-              <p className="font-normal text-gray-700 dark:text-gray-400">
-                <span className="font-bold">Spillere online: </span>
-                {status.server.clients}/{status.server.sv_maxclients}
-              </p>
-              <p className="font-normal text-gray-700 dark:text-gray-400">
-                <span className="font-bold">Status: </span>
-                <span className="text-lime600">
-                  <span className="animate-ping rounded-full opacity-75">
-                    &bull;
-                  </span>
-                  Online
-                </span>
-              </p>
-              <p className="font-normal text-gray-700 dark:text-gray-400">
-                <span className="font-bold">Vejr: </span>
-                {status.weather.weather[0].main}
-              </p>
-              <p className="font-normal text-gray-700 dark:text-gray-400">
-                <span className="font-bold">Klokkeslæt: </span>
-                {status.time.time}
-              </p>
-              {server === "main" && (
-                <p className="font-gray-700 font-normal dark:text-gray-400">
-                  <span className="font-bold">Connect: </span>
-                  <Button asChild color="success">
-                    <Link href="fivem://connect/cfx.re/join/wz7zdy">
-                      Tislut
-                    </Link>
-                  </Button>
-                </p>
-              )}
-              {server === "dev" && (
-                <p className="font-normal text-gray-700 dark:text-gray-400">
-                  <span className="font-bold">Connect: </span>
-                  <Button asChild color="success">
-                    <Link href="fivem://connect/cfx.re/join/pglrx7">
-                      Tilslut
-                    </Link>
-                  </Button>
-                </p>
-              )}
-              {server === "event" && (
-                <p className="font-normal text-gray-700 dark:text-gray-400">
-                  <span className="font-bold">Connect: </span>
-                  <Button asChild color="success">
-                    <Link href="fivem://connect/cfx.re/join/wdrej2">
-                      Tilslut
-                    </Link>
-                  </Button>
-                </p>
-              )}
-            </Card>
-          )}
-        </div>
-      ) : (
-        <Card className="max-w-sm">
-          {server === "main" && (
-            <h4 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              FiveM - Main
-            </h4>
-          )}
-          {server === "dev" && (
-            <h4 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              FiveM - Dev
-            </h4>
-          )}
-          {server == "event" && (
-            <h4 className="tracking-tright text-xl font-semibold text-gray-900 dark:text-white">
-              FiveM - Event
-            </h4>
-          )}
-        </Card>
-      )}
-    </>
-  ); */
+  );
 }
