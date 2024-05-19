@@ -1,10 +1,7 @@
 "use client";
 
-import type { AxiosResponse } from "axios";
-import axios from "axios";
-import { Skeleton } from "./ui/skeleton";
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import { Skeleton } from "./ui/skeleton";
 
 interface PortfolioProps {
   count: number;
@@ -17,23 +14,21 @@ interface ServerResponse {
   images: string[];
 }
 
-export default function Portfolio({ count, folder}: PortfolioProps) {
+export default function Portfolio({ count, folder }: PortfolioProps) {
   const [serverResponse, setServerResponse] = useState<ServerResponse | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-
-  }, [count, folder]);
+  useEffect(() => {}, [count, folder]);
 
   return (
     <>
       {loading ? (
-        <Skeleton className="w-[100px] h-[20px] rounded-full" />
+        <Skeleton className="h-[20px] w-[100px] rounded-full" />
       ) : (
-
+        <></>
       )}
     </>
-  )
+  );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Skeleton } from "./ui/skeleton";
 
 interface WeatherData {
   data: {
@@ -101,7 +102,15 @@ export default function Status({ game, server }: Props) {
   }, [status]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex flex-col space-y-3">
+        <Skeleton className="h-[125px] w-[250px] rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
+      </div>
+    );
   }
 
   if (status && status.server && status.server.data) {
@@ -152,10 +161,12 @@ export default function Status({ game, server }: Props) {
   return (
     <Card className="max-w-screen">
       <CardHeader>
-        <CardTitle>FiveM - {server}</CardTitle>
+        <CardTitle>
+          FiveM - {server.charAt(0).toUpperCase() + server.slice(1)}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <p>
+        <p className="font-normal text-gray-700 dark:text-gray-400">
           <span className="font-bold">Status: </span>
           <span className="text-red-600">
             <span className="animate-ping rounded-full opacity-75">&bull;</span>
