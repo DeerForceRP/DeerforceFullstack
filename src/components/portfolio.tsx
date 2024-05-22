@@ -1,6 +1,5 @@
 'use client';
 
-import logger from '@/lib/logger';
 import PortfolioService from '@/services/PortfolioService';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -44,7 +43,7 @@ export default function Portfolio({ count, folder }: PortfolioProps) {
 				// Set the parsed data to state
 				setServerResponse(data);
 			} catch (error) {
-				logger.info('Failed to fetch server status:', error);
+				console.info('Failed to fetch server status:', error);
 			} finally {
 				setLoading(false);
 			}
