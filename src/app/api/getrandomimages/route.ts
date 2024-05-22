@@ -1,81 +1,58 @@
-import fs from "fs";
-import { NextRequest, NextResponse } from "next/server";
-import path from "path";
+import fs from 'fs';
+import { NextRequest, NextResponse } from 'next/server';
+import path from 'path';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const folder = searchParams.get("folder");
-  const countParam = searchParams.get("count");
+	const { searchParams } = new URL(req.url);
+	const folder = searchParams.get('folder');
+	const countParam = searchParams.get('count');
 
-  let imageFolder: string;
-  let imagePaths: string[];
+	// Determine the image folder path based on the optional folder parameter
+	const imageFolder = folder
+		? path.join(process.cwd(), 'public', 'images', 'portfolio', folder)
+		: path.join(process.cwd(), 'public', 'images', 'portfolio');
 
-  if (typeof folder === "string") {
-    if (folder) {
-      imageFolder = path.join(
-        process.cwd(),
-        "public",
-        "images",
-        "portfolio",
-        folder,
-      );
-    } else {
-      imageFolder = path.join(process.cwd(), "public", "images", "portfolio");
-    }
-  } else {
-    return NextResponse.json(
-      { error: "Invalid folder paramter" },
-      { status: 400 },
-    );
-  }
+	console.log(imageFolder);
 
-  let count: number;
-  if (typeof countParam === "string") {
-    count = parseInt(countParam);
-    if (isNaN(count)) {
-      return NextResponse.json(
-        { error: "Invalid count paramter" },
-        { status: 400 },
-      );
-    }
-  } else {
-    count = 8;
-  }
+	// Default count to 8 if not provided
+	let count = 8;
+	if (countParam) {
+		const parsedCount = parseInt(countParam);
+		if (isNaN(parsedCount)) {
+			return NextResponse.json(
+				{ error: 'Invalid count parameter' },
+				{ status: 400 }
+			);
+		}
+		count = parsedCount;
+	}
 
-  const allowedExtensions: string[] = [".webp"];
-  let images: string[];
-  try {
-    images = fs.readdirSync(imageFolder).filter((file: string) => {
-      const ext: string = path.extname(file).toLowerCase();
-      return allowedExtensions.includes(ext);
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Error reading image directory" },
-      { status: 500 },
-    );
-  }
+	// Allowed file extensions
+	const allowedExtensions = ['.webp'];
 
-  const shuffledImages: string[] = images.sort(() => Math.random() - 0.5);
+	// Read the directory and filter for allowed extensions
+	let images;
+	try {
+		images = fs.readdirSync(imageFolder).filter((file) => {
+			const ext = path.extname(file).toLowerCase();
+			return allowedExtensions.includes(ext);
+		});
+	} catch (error) {
+		return NextResponse.json(
+			{ error: 'Folder not found' },
+			{ status: 404 }
+		);
+	}
 
-  const selectedImages: string[] = shuffledImages.slice(0, count);
+	// Shuffle and select images
+	const shuffledImages = images.sort(() => Math.random() - 0.5);
+	const selectedImages = shuffledImages.slice(0, count);
 
-  if (typeof folder === "string") {
-    if (folder) {
-      imagePaths = selectedImages.map(
-        (image: string) => `/images/portfolio/${folder}/${image}`,
-      );
-    } else {
-      imagePaths = selectedImages.map(
-        (image: string) => `/images/portfolio/${image}`,
-      );
-    }
-  } else {
-    return NextResponse.json(
-      { error: "Invalid folder paramter" },
-      { status: 400 },
-    );
-  }
+	// Construct image paths for the response
+	const imagePaths = folder
+		? selectedImages.map((image) => `/images/portfolio/${folder}/${image}`)
+		: selectedImages.map((image) => `/images/portfolio/${image}`);
 
-  return NextResponse.json({ images: imagePaths }, { status: 200 });
+	// Respond with the selected image paths
+	return NextResponse.json({ images: imagePaths });
 }
