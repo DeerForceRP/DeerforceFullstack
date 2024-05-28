@@ -70,6 +70,13 @@ const teams: TeamProps[] = [
 		],
 	},
 	{
+		name: 'FiveM',
+		members: [
+			{ memberId: '1', roles: ['Ledelse', 'Udvikler'] },
+			{ memberId: '2', roles: ['Ledelse', 'Whitelist Modtager'] },
+		],
+	},
+	{
 		name: 'Marketing Team',
 		members: [
 			{ memberId: '3', roles: ['Marketing Specialist'] },
@@ -90,7 +97,20 @@ const Team: FC<TeamComponentProps> = ({ teamName, memberName }) => {
 	const team = findTeam(teamName);
 
 	if (!team) {
-		return <p>Team not found</p>;
+		return (
+			<section className="px-0 py-24">
+				<div className="mx-auto max-w-screen-xl px-4 py-8 text-center lg:px-6 lg:py-16">
+					<div className="mx-auto mb-8 max-w-screen-sm lg:mb-16">
+						<h2 className="mb-4 text-4xl font-extrabold capitalize tracking-tight">
+							Vores team
+						</h2>
+					</div>
+					<div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-16">
+						<p>Team not found</p>
+					</div>
+				</div>
+			</section>
+		);
 	}
 
 	const membersToDisplay = memberName
@@ -109,7 +129,7 @@ const Team: FC<TeamComponentProps> = ({ teamName, memberName }) => {
 			<div className="mx-auto max-w-screen-xl px-4 py-8 text-center lg:px-6 lg:py-16">
 				<div className="mx-auto mb-8 max-w-screen-sm lg:mb-16">
 					<h2 className="mb-4 text-4xl font-extrabold tracking-tight">
-						{team.name}
+						Vores team
 					</h2>
 				</div>
 				<div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-16">
